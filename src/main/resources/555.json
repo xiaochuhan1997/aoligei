@@ -1,0 +1,44 @@
+{
+  "$ref": {
+    "title": "NodeOperateInfoDTO",
+    "type": "object",
+    "properties": {
+      "addDirection": {
+        "type": "string",
+        "description": "添加节点方向 0-前一节点 1-后一节点"
+      },
+      "approvalRoleId": {
+        "type": "string",
+        "description": "审批角色id"
+      },
+      "approvalRoleLevel": {
+        "type": "string",
+        "description": "审批角色层级 1-总行 2-一级 3-二级"
+      },
+      "approvalRoleName": {
+        "type": "string",
+        "description": "审批角色名称"
+      },
+      "currentNodeId": {
+        "type": "string",
+        "description": "当前节点id"
+      },
+      "flowCode": {
+        "type": "string",
+        "description": "审批流程code"
+      },
+      "flowName": {
+        "type": "string",
+        "description": "审批流程名称"
+      },
+      "flowNodeName": {
+        "type": "string",
+        "description": "审批流程节点名称"
+      },
+      "uuid": {
+        "type": "string",
+        "description": "uuid123"
+      }
+    }
+  }
+}
