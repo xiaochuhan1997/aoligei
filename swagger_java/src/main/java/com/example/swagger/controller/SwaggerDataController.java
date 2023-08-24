@@ -22,7 +22,7 @@ public class SwaggerDataController {
     @Autowired
     private SwaggerDataService swaggerDataService;
 
-    @PostMapping("/analyze")//swagger查询
+    @PostMapping("/analyze")//swagger解析
     public R<List<SwaggerData>> analyze(@RequestBody Object a) {
         log.info("解析接口开始:{}");
 //        SwaggerData swaggerData = new SwaggerData();
