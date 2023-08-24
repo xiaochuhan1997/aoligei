@@ -95,7 +95,7 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
             }
 
             //将数据加入列表中
-//            swaggerDataList.add(swaggerData);
+            swaggerDataList.add(swaggerData);
 
 
         }
@@ -108,7 +108,7 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
     public static String getJson() {
         String jsonStr = "";
         try {
-            File file = new File("D:\\swagger_java\\swagger\\src\\main\\resources\\11.json");
+            File file = new File("D:\\SpringBoot\\Swagger_remote\\swagger_java\\src\\main\\resources\\11.json");
             FileReader fileReader = new FileReader(file);
             Reader reader = new InputStreamReader(new FileInputStream(file), "Utf-8");
             int ch = 0;

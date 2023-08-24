@@ -22,8 +22,19 @@ public class SwaggerDataController {
     @Autowired
     private SwaggerDataService swaggerDataService;
 
-    @PostMapping
-    public R<List<SwaggerData>> save(@RequestBody Object a) {
+    @PostMapping("/analyze")//swagger查询
+    public R<List<SwaggerData>> analyze(@RequestBody Object a) {
+        log.info("解析接口开始:{}");
+//        SwaggerData swaggerData = new SwaggerData();
+//        swaggerData.setInputParam(a.get("inputParam").toString());
+//        System.out.println(swaggerData);
+//        swaggerDataService.save(swaggerData);
+        List<SwaggerData> dataList = swaggerDataService.analyze();
+//        List<SwaggerData> dataList = swaggerDataService.list();
+        return R.success(dataList);
+    }
+    @PostMapping("/query")//swagger查询
+    public R<List<SwaggerData>> query(@RequestBody Object a) {
         log.info("解析接口开始:{}");
 //        SwaggerData swaggerData = new SwaggerData();
 //        swaggerData.setInputParam(a.get("inputParam").toString());
