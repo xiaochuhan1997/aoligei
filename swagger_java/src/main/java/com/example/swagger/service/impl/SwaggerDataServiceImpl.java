@@ -1,19 +1,14 @@
 package com.example.swagger.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.swagger.entity.SwaggerData;
 import com.example.swagger.mapper.SwaggerDataMapper;
 import com.example.swagger.service.SwaggerDataService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-import net.sf.json.JSONSerializer;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.stereotype.Service;
-
+import org.apache.commons.lang3.SerializationUtils;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,11 +20,18 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
 
     public List<SwaggerData> analyze() {
         List<SwaggerData> swaggerDataList = new ArrayList<>();
-        ObjectMapper mapper = new ObjectMapper();
+        List<SwaggerData> tempList = new ArrayList<>();
         root = JSONObject.fromObject(getJson());
         analysisJson(root);
-        String servers = root.getJSONArray("servers").getJSONObject(0).get("url").toString();
-        Iterator paths = root.getJSONObject("paths").keys();
+        String servers = null;
+        if (root.has("servers")) {
+            servers = root.getJSONArray("servers").getJSONObject(0).get("url").toString();
+        }
+        Iterator paths = null;
+        if (root.has("paths")) {
+            paths = root.getJSONObject("paths").keys();
+        }
+
         while (paths.hasNext()) {
             SwaggerData swaggerData = new SwaggerData();
             //获取服务地址
@@ -37,67 +39,89 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
             //获取API地址
             String apiUrl = paths.next().toString();
             swaggerData.setApiUrl(apiUrl);
-            //获取请求方式
-            String method = root.getJSONObject("paths").getJSONObject(apiUrl).keys().next().toString();
-            swaggerData.setMethod(method);
-            JSONObject tmp = root.getJSONObject("paths").getJSONObject(apiUrl).getJSONObject(method);
-            //获取标签
-            String tags = tmp.getJSONArray("tags").get(0).toString();
-            swaggerData.setTag(tags);
-            //获取描述
-            String summary = tmp.get("summary").toString();
-            swaggerData.setSummary(summary);
-            //获取输入参数
-            if (method.equals("get") && tmp.has("parameters")) {
-                // 需要将输入参数分割为参数和描述
-                String parametersTmp = tmp.get("parameters").toString();
 
-                // 将 JSON 字符串转换为 JSONArray 对象
-                JSONArray jsonArray = JSONArray.fromObject(parametersTmp);
+            Iterator<String> keys = root.getJSONObject("paths").getJSONObject(apiUrl).keys();
+            //通过url下的请求方式进行遍历
+            while (keys.hasNext()){
+                //获取请求方式
+                String method = keys.next();
+                swaggerData.setMethod(method);
+                JSONObject tmp = root.getJSONObject("paths").getJSONObject(apiUrl).getJSONObject(method);
+                //获取标签
+                String tags = tmp.getJSONArray("tags").get(0).toString();
+                swaggerData.setTag(tags);
+                //获取描述
+                String summary = tmp.get("summary").toString();
+                swaggerData.setSummary(summary);
+                //获取输入参数，解析get请求
+                if (method.equals("get") && tmp.has("parameters")) {
+                    // 需要将输入参数分割为参数和描述
+                    String parametersTmp = tmp.get("parameters").toString();
 
-                // 提取第一个 JSON 对象的 name 字段，并生成新的 JSON 字符串 就是参数
-                JSONObject parameters = new JSONObject();
+                    // 将 JSON 字符串转换为 JSONArray 对象
+                    JSONArray jsonArray = JSONArray.fromObject(parametersTmp);
 
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    parameters.put(jsonObject.getString("name"), "");
+                    // 提取第一个 JSON 对象的 name 字段，并生成新的 JSON 字符串 就是参数
+                    JSONObject parameters = new JSONObject();
+
+                    for (int i = 0; i < jsonArray.size(); i++) {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        parameters.put(jsonObject.getString("name"), "");
+                    }
+                    String result1 = parameters.toString();
+                    System.out.println(result1);
+                    // 提取第二个 JSON 对象的 name 字段，并生成新的 JSON 字符串 就是描述
+
+                    JSONArray parametersDec = new JSONArray();
+                    for (int i = 0; i < jsonArray.size(); i++) {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        JSONObject schema = jsonObject.getJSONObject("schema");
+                        JSONObject json2 = new JSONObject();
+                        json2.put("name", jsonObject.getString("name"));
+                        json2.put("description", jsonObject.getString("description"));
+                        json2.put("required", jsonObject.getBoolean("required"));
+                        json2.put("type", schema.getString("type"));
+                        parametersDec.add(json2);
+                    }
+                    swaggerData.setInputParam(parameters.toString());
+                    swaggerData.setInputParamDec(parametersDec.toString());
+                    if (tmp.getJSONObject("responses").toString().contains("*/*")) {
+                        String responses_tmp = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("*/*").getJSONObject("schema").toString();
+                        String responses = StringEscapeUtils.unescapeJavaScript(responses_tmp);
+                        swaggerData.setOutputParam(responses);
+
+                    } else if (tmp.getJSONObject("responses").toString().contains("application/json")) {
+                        String responses = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("application/json").getJSONObject("schema").getJSONObject("$ref").toString();
+                        swaggerData.setOutputParam(responses);
+                    }
+
+
+
                 }
-                String result1 = parameters.toString();
-                System.out.println(result1);
-                // 提取第二个 JSON 对象的 name 字段，并生成新的 JSON 字符串 就是描述
+                //解析postpost请求
+                else if (method.equals("post") ) {
+                    if (tmp.has("requestBody")){
+                        String parameters = tmp.getJSONObject("requestBody").getJSONObject("content").getJSONObject("application/json").get("schema").toString();
+                        swaggerData.setInputParam(parameters);
+                        if (tmp.getJSONObject("responses").toString().contains("*/*")) {
+                            String responses_tmp = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("*/*").getJSONObject("schema").toString();
+                            String responses = StringEscapeUtils.unescapeJavaScript(responses_tmp);
+                            swaggerData.setOutputParam(responses);
 
-                JSONArray parametersDec = new JSONArray();
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    JSONObject schema = jsonObject.getJSONObject("schema");
-                    JSONObject json2 = new JSONObject();
-                    json2.put("name", jsonObject.getString("name"));
-                    json2.put("description", jsonObject.getString("description"));
-                    json2.put("required", jsonObject.getBoolean("required"));
-                    json2.put("type", schema.getString("type"));
-                    parametersDec.add(json2);
+                        } else if (tmp.getJSONObject("responses").toString().contains("application/json")) {
+                            String responses = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("application/json").getJSONObject("schema").getJSONObject("$ref").toString();
+                            swaggerData.setOutputParam(responses);
+                        }}
+
                 }
-                swaggerData.setInputParam(parameters.toString());
-                swaggerData.setInputParamDec(parametersDec.toString());
-            } else if (method.equals("post") && tmp.has("requestBody")) {
-                String parameters = tmp.getJSONObject("requestBody").getJSONObject("content").getJSONObject("application/json").get("schema").toString();
-                swaggerData.setInputParam(parameters);
+                tempList.add(swaggerData);
+                // 获取templist的最后一条数据/最新add的数据
+                SwaggerData lastData = tempList.get(tempList.size() - 1);
+
+                // 进行深拷贝，并将拷贝后的数据添加到swaggerDataList中
+                SwaggerData copiedData = deepCopy(lastData);
+                swaggerDataList.add(copiedData);
             }
-            //获取输出参数
-            if (tmp.getJSONObject("responses").toString().contains("*/*")) {
-                String responses_tmp = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("*/*").getJSONObject("schema").toString();
-                String responses = StringEscapeUtils.unescapeJavaScript(responses_tmp);
-                swaggerData.setOutputParam(responses);
-
-            } else if (tmp.getJSONObject("responses").toString().contains("application/json")) {
-                String responses = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("application/json").getJSONObject("schema").getJSONObject("$ref").toString();
-                swaggerData.setOutputParam(responses);
-            }
-
-            //将数据加入列表中
-            swaggerDataList.add(swaggerData);
-
-
         }
         //将数据存入数据库
 //        this.saveBatch(swaggerDataList);
@@ -164,6 +188,9 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
             }
 
         }
+    }// 通过调用SerializationUtils.clone()方法实现了SwaggerData对象的深拷贝
+    public static SwaggerData deepCopy(SwaggerData original) {
+        return SerializationUtils.clone(original);
     }
 
 
