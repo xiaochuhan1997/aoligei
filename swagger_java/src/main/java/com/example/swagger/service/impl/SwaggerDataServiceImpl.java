@@ -124,7 +124,7 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
             }
         }
         //将数据存入数据库
-//        this.saveBatch(swaggerDataList);
+        this.saveBatch(swaggerDataList);
         return swaggerDataList;
     }
 
