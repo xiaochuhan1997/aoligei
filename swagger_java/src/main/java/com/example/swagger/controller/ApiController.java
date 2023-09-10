@@ -7,11 +7,13 @@ import com.example.swagger.service.SwaggerDataService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 
-import java.io.Serializable;
+import java.io.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -46,51 +48,45 @@ public class ApiController {
 //        return R.success(response);
 //    }
 
+
+
     @PostMapping("/sendJson")
-    public ResponseEntity<?> handlePostRequest(@RequestBody Map<String, Object> requestData) {
+    public ResponseEntity<String> sendJson(@RequestBody Map<String, Object> requestData) {
         log.info(String.valueOf(requestData));
 
         try {
             Long id = Long.valueOf(String.valueOf(requestData.get("id")));
             SwaggerData result = swaggerDataService.getInputOutputParamsById(id);
-
+            String serverUrl = result.getServerUrl();
+            String apiUrl = result.getApiUrl();
             String method = result.getMethod();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response;
+
             if (StringUtils.equalsIgnoreCase(method, "get")) {
-                System.out.println("getgetget");
+                response = restTemplate.exchange(serverUrl + apiUrl, HttpMethod.GET, entity, String.class);
+                System.out.println("GET Request Sent");
             } else if (StringUtils.equalsIgnoreCase(method, "post")) {
-                System.out.println("postpostpost");
+                headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+                String requestBody = requestData.get("requestBody").toString();
+                entity = new HttpEntity<>(requestBody, headers);
+                response = restTemplate.exchange(serverUrl + apiUrl, HttpMethod.POST, entity, String.class);
+                System.out.println("POST Request Sent");
             } else {
-                System.out.println("other");
+                System.out.println("Invalid method");
+                return ResponseEntity.badRequest().build();
             }
 
-            // 进一步处理逻辑
-
-            return ResponseEntity.ok().build();
-        } catch (NumberFormatException e) {
-            // 处理 ID 转换异常
-            return ResponseEntity.badRequest().body("Invalid ID format");
-        } catch (NullPointerException e) {
-            // 处理空指针异常或缺少的参数
-            return ResponseEntity.badRequest().body("Missing or null ID parameter");
+            // 处理响应数据
+            return response;
+        } catch (Exception e) {
+            // 异常处理
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred");
         }
     }
-
-
-
-
-
-
 }
-
-//    @RequestMapping(method = RequestMethod.PUT)
-//    public ResponseEntity<String> handlePutRequest(@RequestBody String requestBody) {
-//        // 处理PUT请求，requestBody包含请求体的内容
-//        return ResponseEntity.ok("PUT request handled with request body: " + requestBody);
-//    }
-//
-//    @RequestMapping(method = RequestMethod.DELETE)
-//    public ResponseEntity<String> handleDeleteRequest() {
-//        // 处理DELETE请求
-//        return ResponseEntity.ok("DELETE request handled");
-//    }
-
