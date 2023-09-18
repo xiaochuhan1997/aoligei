@@ -1,5 +1,5 @@
 package com.example.swagger.service.impl;
-
+import com.example.swagger.utils.JsonRefRemover;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.swagger.entity.SwaggerData;
 import com.example.swagger.mapper.SwaggerDataMapper;
@@ -10,6 +10,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.stereotype.Service;
 import org.apache.commons.lang3.SerializationUtils;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -84,16 +85,16 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                         json2.put("type", schema.getString("type"));
                         parametersDec.add(json2);
                     }
-                    swaggerData.setInputParam(parameters.toString());
-                    swaggerData.setInputParamDec(parametersDec.toString());
+                    swaggerData.setInputParam(JsonRefRemover.modifyInput(parameters.toString()));
+                    swaggerData.setInputParamDec(JsonRefRemover.modifyInput(parametersDec.toString()));
                     if (tmp.getJSONObject("responses").toString().contains("*/*")) {
                         String responses_tmp = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("*/*").getJSONObject("schema").toString();
                         String responses = StringEscapeUtils.unescapeJavaScript(responses_tmp);
-                        swaggerData.setOutputParam(responses);
+                        swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
 
                     } else if (tmp.getJSONObject("responses").toString().contains("application/json")) {
                         String responses = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("application/json").getJSONObject("schema").getJSONObject("$ref").toString();
-                        swaggerData.setOutputParam(responses);
+                        swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
                     }
 
 
@@ -103,15 +104,15 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                 else if (method.equals("post") ) {
                     if (tmp.has("requestBody")){
                         String parameters = tmp.getJSONObject("requestBody").getJSONObject("content").getJSONObject("application/json").get("schema").toString();
-                        swaggerData.setInputParam(parameters);
+                        swaggerData.setInputParam(JsonRefRemover.modifyInput(parameters));
                         if (tmp.getJSONObject("responses").toString().contains("*/*")) {
                             String responses_tmp = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("*/*").getJSONObject("schema").toString();
                             String responses = StringEscapeUtils.unescapeJavaScript(responses_tmp);
-                            swaggerData.setOutputParam(responses);
+                            swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
 
                         } else if (tmp.getJSONObject("responses").toString().contains("application/json")) {
                             String responses = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("application/json").getJSONObject("schema").getJSONObject("$ref").toString();
-                            swaggerData.setOutputParam(responses);
+                            swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
                         }}
 
                 }
@@ -135,15 +136,15 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
         try {
             File file = new File("D:\\SpringBoot\\Swagger_remote\\swagger_java\\src\\main\\resources\\11.json");
             FileReader fileReader = new FileReader(file);
-            Reader reader = new InputStreamReader(new FileInputStream(file), "Utf-8");
+            Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
             int ch ;
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             while ((ch = reader.read()) != -1) {
                 sb.append((char) ch);
             }
             fileReader.close();
             reader.close();
-//            String jsonStr = sb.toString();
+
             return sb.toString();
         } catch (Exception e) {
             return null;
@@ -153,23 +154,20 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
     public static void analysisJson(Object objJson) {
 
         //如果obj为json数组
-        if (objJson instanceof JSONArray) {
-            JSONArray objArray = (JSONArray) objJson;
-            for (int i = 0; i < objArray.size(); i++) {
-                analysisJson(objArray.get(i));
+        if (objJson instanceof JSONArray objArray) {
+            for (Object o : objArray) {
+                analysisJson(o);
             }
         }
         //如果为json对象
-        else if (objJson instanceof JSONObject) {
-            JSONObject jsonObject = (JSONObject) objJson;
+        else if (objJson instanceof JSONObject jsonObject) {
 
             Iterator it = jsonObject.keys();
             while (it.hasNext()) {
                 String key = it.next().toString();
                 Object object = jsonObject.get(key);
                 //如果得到的是数组
-                if (object instanceof JSONArray) {
-                    JSONArray objArray = (JSONArray) object;
+                if (object instanceof JSONArray objArray) {
                     analysisJson(objArray);
                 }
                 //如果key中是一个json对象
@@ -177,12 +175,11 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                     if (((JSONObject) object).has("$ref")) {
                         String[] refs = ((JSONObject) object).get("$ref").toString().split("/");
                         String ref = refs[refs.length - 1];
-//                        System.out.println(ref);
+
                         Object jsonObjectTmp = root.getJSONObject("components").getJSONObject("schemas").get(ref);
                         ((JSONObject) object).put("$ref", jsonObjectTmp);
-//                        System.out.println(root);
+
                     }
-//                    analysisJson((JSONObject) object);
                     analysisJson( object);
 
                 }

@@ -38,17 +38,6 @@ public class ApiController {
     }
     @Autowired
     private SwaggerDataService swaggerDataService;
-//    @Autowired
-//    private ApiControllerService apiControllerService;
-
-//    @RequestMapping(method = RequestMethod.GET)
-//    public R<Response> handleGetRequest(Request request) throws IOException {
-//        // 处理GET请求
-//        Response response = apiControllerService.GetRequestSender(request.getUrl(), request.getHeaders(), request.getParams());
-//        return R.success(response);
-//    }
-
-
 
     @PostMapping("/sendJson")
     public ResponseEntity<String> sendJson(@RequestBody Map<String, Object> requestData) {
