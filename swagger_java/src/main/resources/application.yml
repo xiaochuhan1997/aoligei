@@ -10,6 +10,12 @@ spring:
       url: jdbc:mysql://111.229.151.43:3306/swagger?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
       username: root
       password: '*VYKmhufX%Ze5S!=QCq^KYuP'
+#localhost
+#      url: jdbc:mysql://127.0.0.1:3306/swagger?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+#      username: root
+#      password: abcd@1234
+
+
 mybatis-plus:
   configuration:
     #在映射实体或者属性时，将数据库中表名和字段名中的下划线去掉，按照驼峰命名法映射
