@@ -4,10 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
+import springfox.documentation.oas.annotations.EnableOpenApi;
 
 @Slf4j
 @SpringBootApplication
 @ServletComponentScan
+@EnableOpenApi
 public class SwaggerApplication {
 
     public static void main(String[] args) {
