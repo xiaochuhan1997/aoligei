@@ -79,8 +79,6 @@ export default defineComponent({
     const handleReady = (payload) => {
       view.value = payload.view;
     };
-
-    // Status is available at all times via Codemirror EditorView
     const getCodemirrorStates = () => {
       const state = view.value.state;
       const ranges = state.selection.ranges;
@@ -107,7 +105,6 @@ export default defineComponent({
       this.code2 = JSON.stringify(JSON.parse(this.code2), null, '\t');
     },
     async test() {
-      // this.data.params = JSON.stringify(this.data.params);
       console.log('code2' + this.code2);
       this.data.params = this.code2
         .replace(/\r\n/g, '')

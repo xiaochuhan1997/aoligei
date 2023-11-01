@@ -7,14 +7,12 @@ import axios from 'axios'
 import './assets/css/global.css'
 import VueCodeMirror from 'vue-codemirror'
 import Codemirror from 'vue-codemirror'
-
+// import "jsoneditor";
 
 
 // import VueBus from 'vue-bus';
 // script src = "https://cdn.jsdelivr.net/npm/vue-bus/dist/vue-bus.js" > < /script>
 // Vue.prototype.$bus = Bus
-
-
 
 
 const app = createApp(App)
