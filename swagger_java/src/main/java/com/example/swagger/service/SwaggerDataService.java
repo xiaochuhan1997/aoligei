@@ -6,9 +6,12 @@ import com.example.swagger.entity.SwaggerData;
 import java.util.List;
 
 public interface SwaggerDataService extends IService<SwaggerData> {
+
     @Autowired
 
     List<SwaggerData> analyze();
     SwaggerData getInputOutputParamsById(Long id);
+    SwaggerData saveData(SwaggerData swaggerdata);
+
 
 }

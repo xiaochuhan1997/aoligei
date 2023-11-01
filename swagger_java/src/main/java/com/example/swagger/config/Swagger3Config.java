@@ -3,6 +3,7 @@ package com.example.swagger.config;
 
 import io.swagger.annotations.ApiOperation;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -19,6 +20,7 @@ import springfox.documentation.spring.web.plugins.Docket;
  */
 @SpringBootConfiguration
 @EnableOpenApi
+@Configuration
 public class Swagger3Config {
     /**
      *   application中还配置了mvc，因为springboot2.6.1与swagger3不兼容
@@ -32,6 +34,7 @@ public class Swagger3Config {
                 .select()
                 // 扫描的路径使用@Api的controller
                 .apis(RequestHandlerSelectors.withMethodAnnotation(ApiOperation.class))
+                .apis(RequestHandlerSelectors.basePackage("com.example.swagger.controller"))
                 // 指定路径处理PathSelectors.any()代表所有的路径
                 .paths(PathSelectors.any())
                 .build();

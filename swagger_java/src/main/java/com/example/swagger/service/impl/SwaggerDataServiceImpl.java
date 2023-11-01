@@ -1,4 +1,5 @@
 package com.example.swagger.service.impl;
+import com.baomidou.mybatisplus.core.toolkit.SerializationUtils;
 import com.example.swagger.utils.JsonRefRemover;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.swagger.entity.SwaggerData;
@@ -8,7 +9,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.stereotype.Service;
-import org.apache.commons.lang3.SerializationUtils;
+//import org.apache.commons.lang3.SerializationUtils;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -126,7 +127,18 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
             }
         }}
         //将数据存入数据库
-        this.saveBatch(swaggerDataList);
+//        this.saveBatch(swaggerDataList);
+        //遍历ArrayList，临时插入id，解决前端下拉框同时下拉问题
+        int counter = 1;
+        // 遍历ArrayList中的每个元素
+        for (SwaggerData item : swaggerDataList) {
+            // 为每个元素的id字段分配递增的值
+            item.setId((long) counter);
+            counter++;
+        }
+        for (SwaggerData item : swaggerDataList) {
+            System.out.println("ID: " + item.getId());
+        }
         return swaggerDataList;
     }
 
@@ -134,7 +146,7 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
     public static String getJson() {
 
         try {
-            File file = new File("D:\\SpringBoot\\Swagger_remote\\swagger_java\\src\\main\\resources\\11.json");
+            File file = new File("D:\\SpringBoot\\Swagger_remote\\swagger_java\\src\\main\\resources\\123.json");
             FileReader fileReader = new FileReader(file);
             Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
             int ch ;
@@ -198,6 +210,18 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
     public SwaggerData getInputOutputParamsById(Long id) {
         return swaggerDataMapper.findInputOutputParamsById(id);
     }
+    @Override
+    public SwaggerData saveData(SwaggerData swaggerData) {
+        int rowsInserted = swaggerDataMapper.saveData(swaggerData);
+        if (rowsInserted > 0) {
+            // Insertion was successful
+            return swaggerData;
+        } else {
+            // Handle insertion failure
+            return null; // You can return an error response or throw an exception
+        }
+    }
+
 
 
 }
