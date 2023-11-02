@@ -38,25 +38,33 @@
                   <span>接口管理</span>
                 </template>
               </el-menu-item>
-              <el-menu-item index="/PageInterface" @click="saveNavState('/PageInterface')">
-                <template #title>
-                  <el-icon>
-                    <Menu />
-                  </el-icon>
-                  <span>swagger首页</span>
-                </template>
-              </el-menu-item>
-              <el-menu-item index="/Article" @click="saveNavState('/Article')">
-                <template #title>
-                  <el-icon>
-                    <Menu />
-                  </el-icon>
-                  <span>分页测试类</span>
-                </template>
-              </el-menu-item>
+<!--              <el-menu-item index="/PageInterface" @click="saveNavState('/PageInterface')">-->
+<!--                <template #title>-->
+<!--                  <el-icon>-->
+<!--                    <Menu />-->
+<!--                  </el-icon>-->
+<!--                  <span>swagger首页</span>-->
+<!--                </template>-->
+<!--              </el-menu-item>-->
+<!--              <el-menu-item index="/Article" @click="saveNavState('/Article')">-->
+<!--                <template #title>-->
+<!--                  <el-icon>-->
+<!--                    <Menu />-->
+<!--                  </el-icon>-->
+<!--                  <span>json编辑</span>-->
+<!--                </template>-->
+<!--              </el-menu-item>-->
+<!--              <el-menu-item index="/interfaceDetails" @click="saveNavState('/interfaceDetails')">-->
+<!--                <template #title>-->
+<!--                  <el-icon>-->
+<!--                    <Menu/>-->
+<!--                  </el-icon>-->
+<!--                  <span>接口管理</span>-->
+<!--                </template>-->
+<!--              </el-menu-item>-->
             </el-sub-menu>
           </el-menu>
-          <!-- </el-col> -->
+<!--           </el-col>-->
         </el-aside>
         <el-main>
           <router-view></router-view>

@@ -26,12 +26,12 @@
   </div>
 </template>
 <script>
-// import Vue from 'vue';
+import Vue from 'vue';
 // import Bus from 'bus.js';
 export default {
   name: 'UcenMenubar',
   props: ['gradfrom', 'menus'],
-  components: { appMenu },
+  // components: { appMenu },
   data() {
     return {
       show: false,
@@ -43,20 +43,20 @@ export default {
   },
   created() {
     let that = this;
-    Bus.$on('openNewTab', function (name) {
-      that.openTab(name);
-    }),
-      Bus.$on('NewTab', function (name) {
-        that.openTab(name);
-      });
-    Bus.$on('NewManyTab', function (name) {
-      that.openTabMany(name); //链接打开多个页面
-    });
+    // Bus.$on('openNewTab', function (name) {
+    //   that.openTab(name);
+    // });
+    //   Bus.$on('NewTab', function (name) {
+    //     that.openTab(name);
+    //   });
+    // Bus.$on('NewManyTab', function (name) {
+    //   that.openTabMany(name);
+    // });
   },
   beforeDestroy() {
-    Bus.$off('openNewTab', name);
-    Bus.$off('NewTab', name);
-    Bus.$off('NewManyTab', name);
+    // Bus.$off('openNewTab', name);
+    // Bus.$off('NewTab', name);
+    // Bus.$off('NewManyTab', name);
   },
   methods: {
     // 打开多个页面
@@ -122,7 +122,6 @@ export default {
       });
       this.TabsValue = menu.name;
     },
-    //remove
     removeTab(targetName) {
       let tabs = this.Tabs;
       let activeName = this.TabsValue;

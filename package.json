@@ -23,8 +23,11 @@
         "vue": "^3.2.13",
         "vue-bus": "^1.2.1",
         "vue-codemirror": "^6.1.1",
+        "vue-json-editor": "^1.4.3",
+        "vue-json-ui-editor": "^1.0.0",
         "vue-prism-editor": "^1.3.0",
-        "vue-router": "^4.0.3"
+        "vue-router": "^4.0.3",
+        "@babel/eslint-parser": "^7.18.2"
     },
     "devDependencies": {
         "@babel/core": "^7.12.16",

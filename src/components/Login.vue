@@ -79,7 +79,6 @@ export default {
         localStorage.setItem('userInfo', JSON.stringify(res.data));
         // window.sessionStorage.setItem('token', res.data.token);
         this.$router.push('/home');
-
       });
     },
   },
