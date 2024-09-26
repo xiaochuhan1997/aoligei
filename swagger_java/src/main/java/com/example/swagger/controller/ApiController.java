@@ -1,20 +1,27 @@
 package com.example.swagger.controller;
 
-import com.example.swagger.common.R;
-import com.example.swagger.service.ApiControllerService;
+
+import com.example.swagger.entity.SwaggerData;
+import com.example.swagger.service.SwaggerDataService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.io.Serializable;
+
+import java.io.*;
+
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/api")
+@Api(value = "测试apiController",tags = {"接口"})
 public class ApiController {
     @Data
     public static class Request implements Serializable {
@@ -31,39 +38,31 @@ public class ApiController {
         private Map<String, List<String>> headers;
         private StringBuffer params;
     }
-
     @Autowired
-    private ApiControllerService apiControllerService;
+    private SwaggerDataService swaggerDataService;
+    @Autowired
+    private RestTemplate restTemplate;
 
-//    @RequestMapping(method = RequestMethod.GET)
-//    public R<Response> handleGetRequest(Request request) throws IOException {
-//        // 处理GET请求
-//        Response response = apiControllerService.GetRequestSender(request.getUrl(), request.getHeaders(), request.getParams());
-//        return R.success(response);
-//    }
-
-    @PostMapping
-    public R<Response> handlePostRequest(@RequestBody Request request) throws IOException {
-        log.info(String.valueOf(request));
-        if (request.getMethod().equals("get")) {
-            Response response = apiControllerService.GetRequestSender(request.getUrl(), request.getHeaders(), request.getParams());
-            return R.success(response);
-        } else if (request.getMethod().equals("post")) {
-            Response response = apiControllerService.PostRequestSender(request.getUrl(), request.getHeaders(), request.getParams());
-            return R.success(response);
+    @ApiOperation("发送Post请求")
+    @PostMapping("/sendPostRequest")
+    public ResponseEntity<String> sendPostRequest(@RequestBody Map<String, Object> request) {
+//        Long id = Long.valueOf(String.valueOf(request.get("id")));
+//      SwaggerData result = swaggerDataService.getInputOutputParamsById(id);
+        String method = String.valueOf(request.get("methods"));
+        //测试用json/url
+        String json = String.valueOf(request.get("inputParam"));
+        String url = String.valueOf(request.get("serverUrl"))+ request.get("apiUrl");
+        if ("POST".equalsIgnoreCase(method)) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(json, headers);
+            return restTemplate.postForEntity(url, entity, String.class);
+        } else {
+            return ResponseEntity.badRequest().body("Invalid method");
         }
-        return R.error("不支持该类型请求");
     }
-
-//    @RequestMapping(method = RequestMethod.PUT)
-//    public ResponseEntity<String> handlePutRequest(@RequestBody String requestBody) {
-//        // 处理PUT请求，requestBody包含请求体的内容
-//        return ResponseEntity.ok("PUT request handled with request body: " + requestBody);
-//    }
-//
-//    @RequestMapping(method = RequestMethod.DELETE)
-//    public ResponseEntity<String> handleDeleteRequest() {
-//        // 处理DELETE请求
-//        return ResponseEntity.ok("DELETE request handled");
-//    }
+    @GetMapping("/getAll")
+    public List<SwaggerData> getAllSwaggerData() {
+        return swaggerDataService.list();
+    }
 }

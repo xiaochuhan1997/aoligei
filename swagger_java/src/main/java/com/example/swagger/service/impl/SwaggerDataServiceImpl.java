@@ -1,5 +1,6 @@
 package com.example.swagger.service.impl;
-
+import com.baomidou.mybatisplus.core.toolkit.SerializationUtils;
+import com.example.swagger.utils.JsonRefRemover;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.swagger.entity.SwaggerData;
 import com.example.swagger.mapper.SwaggerDataMapper;
@@ -8,8 +9,9 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.stereotype.Service;
-import org.apache.commons.lang3.SerializationUtils;
+//import org.apache.commons.lang3.SerializationUtils;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.List;
 @Service
 public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, SwaggerData> implements SwaggerDataService {
     public static JSONObject root;
+    private final SwaggerDataMapper swaggerDataMapper;
 
     public List<SwaggerData> analyze() {
         List<SwaggerData> swaggerDataList = new ArrayList<>();
@@ -31,7 +34,7 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
         if (root.has("paths")) {
             paths = root.getJSONObject("paths").keys();
         }
-
+        if(paths!= null){
         while (paths.hasNext()) {
             SwaggerData swaggerData = new SwaggerData();
             //获取服务地址
@@ -83,16 +86,16 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                         json2.put("type", schema.getString("type"));
                         parametersDec.add(json2);
                     }
-                    swaggerData.setInputParam(parameters.toString());
-                    swaggerData.setInputParamDec(parametersDec.toString());
+                    swaggerData.setInputParam(JsonRefRemover.modifyInput(parameters.toString()));
+                    swaggerData.setInputParamDec(JsonRefRemover.modifyInput(parametersDec.toString()));
                     if (tmp.getJSONObject("responses").toString().contains("*/*")) {
                         String responses_tmp = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("*/*").getJSONObject("schema").toString();
                         String responses = StringEscapeUtils.unescapeJavaScript(responses_tmp);
-                        swaggerData.setOutputParam(responses);
+                        swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
 
                     } else if (tmp.getJSONObject("responses").toString().contains("application/json")) {
                         String responses = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("application/json").getJSONObject("schema").getJSONObject("$ref").toString();
-                        swaggerData.setOutputParam(responses);
+                        swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
                     }
 
 
@@ -102,15 +105,15 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                 else if (method.equals("post") ) {
                     if (tmp.has("requestBody")){
                         String parameters = tmp.getJSONObject("requestBody").getJSONObject("content").getJSONObject("application/json").get("schema").toString();
-                        swaggerData.setInputParam(parameters);
+                        swaggerData.setInputParam(JsonRefRemover.modifyInput(parameters));
                         if (tmp.getJSONObject("responses").toString().contains("*/*")) {
                             String responses_tmp = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("*/*").getJSONObject("schema").toString();
                             String responses = StringEscapeUtils.unescapeJavaScript(responses_tmp);
-                            swaggerData.setOutputParam(responses);
+                            swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
 
                         } else if (tmp.getJSONObject("responses").toString().contains("application/json")) {
                             String responses = tmp.getJSONObject("responses").getJSONObject("200").getJSONObject("content").getJSONObject("application/json").getJSONObject("schema").getJSONObject("$ref").toString();
-                            swaggerData.setOutputParam(responses);
+                            swaggerData.setOutputParam(JsonRefRemover.modifyInput(responses));
                         }}
 
                 }
@@ -122,28 +125,39 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                 SwaggerData copiedData = deepCopy(lastData);
                 swaggerDataList.add(copiedData);
             }
-        }
+        }}
         //将数据存入数据库
-        this.saveBatch(swaggerDataList);
+//        this.saveBatch(swaggerDataList);
+        //遍历ArrayList，临时插入id，解决前端下拉框同时下拉问题
+        int counter = 1;
+        // 遍历ArrayList中的每个元素
+        for (SwaggerData item : swaggerDataList) {
+            // 为每个元素的id字段分配递增的值
+            item.setId((long) counter);
+            counter++;
+        }
+        for (SwaggerData item : swaggerDataList) {
+            System.out.println("ID: " + item.getId());
+        }
         return swaggerDataList;
     }
 
 
     public static String getJson() {
-        String jsonStr = "";
+
         try {
-            File file = new File("D:\\SpringBoot\\Swagger_remote\\swagger_java\\src\\main\\resources\\11.json");
+            File file = new File("D:\\SpringBoot\\Swagger_remote\\swagger_java\\src\\main\\resources\\123.json");
             FileReader fileReader = new FileReader(file);
-            Reader reader = new InputStreamReader(new FileInputStream(file), "Utf-8");
-            int ch = 0;
-            StringBuffer sb = new StringBuffer();
+            Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
+            int ch ;
+            StringBuilder sb = new StringBuilder();
             while ((ch = reader.read()) != -1) {
                 sb.append((char) ch);
             }
             fileReader.close();
             reader.close();
-            jsonStr = sb.toString();
-            return jsonStr;
+
+            return sb.toString();
         } catch (Exception e) {
             return null;
         }
@@ -152,23 +166,20 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
     public static void analysisJson(Object objJson) {
 
         //如果obj为json数组
-        if (objJson instanceof JSONArray) {
-            JSONArray objArray = (JSONArray) objJson;
-            for (int i = 0; i < objArray.size(); i++) {
-                analysisJson(objArray.get(i));
+        if (objJson instanceof JSONArray objArray) {
+            for (Object o : objArray) {
+                analysisJson(o);
             }
         }
         //如果为json对象
-        else if (objJson instanceof JSONObject) {
-            JSONObject jsonObject = (JSONObject) objJson;
+        else if (objJson instanceof JSONObject jsonObject) {
 
             Iterator it = jsonObject.keys();
             while (it.hasNext()) {
                 String key = it.next().toString();
                 Object object = jsonObject.get(key);
                 //如果得到的是数组
-                if (object instanceof JSONArray) {
-                    JSONArray objArray = (JSONArray) object;
+                if (object instanceof JSONArray objArray) {
                     analysisJson(objArray);
                 }
                 //如果key中是一个json对象
@@ -176,12 +187,12 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                     if (((JSONObject) object).has("$ref")) {
                         String[] refs = ((JSONObject) object).get("$ref").toString().split("/");
                         String ref = refs[refs.length - 1];
-//                        System.out.println(ref);
+
                         Object jsonObjectTmp = root.getJSONObject("components").getJSONObject("schemas").get(ref);
                         ((JSONObject) object).put("$ref", jsonObjectTmp);
-//                        System.out.println(root);
+
                     }
-                    analysisJson((JSONObject) object);
+                    analysisJson( object);
 
                 }
                 //如果key中是其他
@@ -192,6 +203,25 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
     public static SwaggerData deepCopy(SwaggerData original) {
         return SerializationUtils.clone(original);
     }
+    public SwaggerDataServiceImpl(SwaggerDataMapper swaggerDataMapper) {
+        this.swaggerDataMapper = swaggerDataMapper;
+    }
+    @Override
+    public SwaggerData getInputOutputParamsById(Long id) {
+        return swaggerDataMapper.findInputOutputParamsById(id);
+    }
+    @Override
+    public SwaggerData saveData(SwaggerData swaggerData) {
+        int rowsInserted = swaggerDataMapper.saveData(swaggerData);
+        if (rowsInserted > 0) {
+            // Insertion was successful
+            return swaggerData;
+        } else {
+            // Handle insertion failure
+            return null; // You can return an error response or throw an exception
+        }
+    }
+
 
 
 }
